@@ -2,7 +2,7 @@
 {
   "modid": "godzillasmod",
   "name": "ChatMod",
-  "description": "MCchat parser for discord.",
+  "description": "Helpful mod for cristalix.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "authorList": ["GodzillaS"]
