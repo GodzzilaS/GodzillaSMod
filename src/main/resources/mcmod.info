@@ -1,0 +1,10 @@
+[
+{
+  "modid": "godzillasmod",
+  "name": "ChatMod",
+  "description": "MCchat parser for discord.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["GodzillaS"]
+}
+]

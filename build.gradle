@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+version = '1.0'
+archivesBaseName = 'ChatMod'
+group = 'ru.godzillas.chatmod'
+mainClassName = 'ru.godzillas.chatmod.ChatMod'
+
+sourceCompatibility = targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.implario.dev/public/' }
+    maven { url = "https://m2.dv8tion.net/releases" }
+}
+
+dependencies {
+    compileOnly 'ru.cristalix:client-api:latest-SNAPSHOT'
+
+    compileOnly 'dev.xdark:clientapi:live-SNAPSHOT'
+}
+
+compileJava.options.encoding = 'UTF-8'
