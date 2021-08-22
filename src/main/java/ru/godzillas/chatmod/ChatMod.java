@@ -100,7 +100,8 @@ public final class ChatMod implements ModMain, Listener {
                 String info = String.format("Информация об %s:\n", name);
                 info += String.format("Uuid: %s\n", networkPlayerInfo.getGameProfile().getId());
                 info += String.format("Пинг: %s\n", networkPlayerInfo.getResponseTime());
-                info += String.format("У этого игрока: \n%s", properties);
+                info += String.format("\n%s", properties);
+                info += "Информация об вас:\n";
                 info += String.format("Еда: %s\n", player.getFoodStats().getFoodLevel());
                 info += String.format("Уровень: %s\n", player.getExperienceLevel());
                 info += String.format("Опыт: %s\n", player.getExperienceTotal());
