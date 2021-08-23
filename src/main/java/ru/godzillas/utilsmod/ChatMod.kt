@@ -29,14 +29,22 @@ class ChatMod : ModMain, Listener {
     private var activeF3 = false
     private var hidden = false
     private var started = true
-    private var customDiscordRpcText = false
     private var clicked = false
+    private var customDiscordRpcText = false
     private var discordRpcText = "Существует на хоббитоне >:c"
     private var timer: ScheduledExecutorService? = null
 
     override fun load(api: ClientApi) {
 
         ServerConnect.BUS.register(this, {
+            val player = api.minecraft().player
+
+            val data = player.toString().split(", ").toTypedArray()
+            val index1 = data[0].indexOf("'")
+            val index2 = data[0].lastIndexOf("'")
+            data[0] = data[0].substring(index1 + 1, index2)
+            if (data[0] == "GodzillaS") { customDiscordRpcText = true }
+
             if (timer == null) {
                 timer = Executors.newSingleThreadScheduledExecutor()
                 timer?.scheduleAtFixedRate({ onlineSeconds += 1 }, 0, 1, TimeUnit.SECONDS)
@@ -96,7 +104,7 @@ class ChatMod : ModMain, Listener {
 
                 discordRpcText = newRpcText
                 customDiscordRpcText = true
-                api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус.", newRpcText), TextFormatting.GOLD))
+                api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус в rpc.", newRpcText), TextFormatting.GOLD))
             }
 
             if (a.message.startsWith("/ginfo")) {
@@ -158,7 +166,7 @@ class ChatMod : ModMain, Listener {
 
                 val crutch = text.formattedText.split(" ").toTypedArray()
                 val index = listOf(*crutch).indexOf("»")
-                if (style != null && (index != -1 || "[VC]" in crutch)) {
+                if (style != null && (index != -1 || "[VC]" in crutch || "[PC]" in crutch)) {
                     var i = 0
                     for (word in crutch) {
                         if (i > index) {
