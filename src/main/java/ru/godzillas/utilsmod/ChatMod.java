@@ -1,4 +1,4 @@
-package ru.godzillas.chatmod;
+package ru.godzillas.utilsmod;
 
 import com.mojang.authlib.properties.Property;
 import dev.xdark.clientapi.ClientApi;
@@ -119,10 +119,39 @@ public final class ChatMod implements ModMain, Listener {
             Text date1 = Text.of("[", TextFormatting.DARK_GRAY);
             Text date2 = Text.of(new SimpleDateFormat("HH:mm:ss").format(new Date()), TextFormatting.LIGHT_PURPLE);
             Text date3 = Text.of("]", TextFormatting.DARK_GRAY);
-            String message = date1.getFormattedText() + date2.getFormattedText() + date3.getFormattedText() + " " + text.getFormattedText();
 
+            String msg, editedText = "";
+            TextFormatting style = null;
+            try {
+                for (Text element : text){
+                    style = element.getStyle().getColor();
+                }
+
+                String[] crutch = text.getFormattedText().split(" ");
+                int index = Arrays.asList(crutch).indexOf("»");
+
+                if (style != null && index != -1) {
+                    int i = 0;
+                    for (String word : crutch) {
+                        if (i > index) {
+                            editedText += style + word + " ";
+                        } else {
+                            editedText += word + " ";
+                            i += 1;
+                        }
+                    }
+                } else {
+                    editedText = text.getFormattedText();
+                }
+
+                msg = Text.of(editedText).getFormattedText();
+            } catch (NullPointerException e) {
+                msg = Text.of(text.getFormattedText()).getFormattedText();
+            }
+            
+            String message = date1.getFormattedText() + date2.getFormattedText() + date3.getFormattedText() + " " + msg;
             a.setText(Text.of(message));
-            api.discordRpc().updateState("Существует на хоббитоне с:");
+            api.discordRpc().updateState("Существует на хоббитоне >:c");
         }, 1);
 
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
