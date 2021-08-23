@@ -14,7 +14,7 @@
 
 Примеры:
 
-![Alt-текст](https://avatars1.githubusercontent.com/u/5384215?v=3&s=460 "HUD")
+![Alt-текст](https://i.imgur.com/LDc90E7.png "HUD")
 
 ![Alt-текст](https://i.imgur.com/LDc90E7.png "Время")
 
