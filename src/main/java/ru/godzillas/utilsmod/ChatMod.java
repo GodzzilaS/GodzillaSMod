@@ -8,6 +8,8 @@ import dev.xdark.clientapi.event.Listener;
 import dev.xdark.clientapi.event.chat.ChatReceive;
 import dev.xdark.clientapi.event.chat.ChatSend;
 import dev.xdark.clientapi.event.input.KeyPress;
+import dev.xdark.clientapi.event.lifecycle.GameLoop;
+import dev.xdark.clientapi.event.network.ServerSwitch;
 import dev.xdark.clientapi.event.render.GuiOverlayRender;
 import dev.xdark.clientapi.inventory.InventoryPlayer;
 import dev.xdark.clientapi.item.ItemStack;
@@ -23,12 +25,15 @@ import java.util.Arrays;
 public final class ChatMod implements ModMain, Listener {
 
     private final int themeColor = 0xffffff;
+    private int availableSlots = 0;
     private boolean activeF3;
     private boolean hidden;
     private String discordRpcText = "Существует на хоббитоне >:c";
 
     @Override
     public void load(ClientApi api) {
+
+        ServerSwitch.BUS.register(this, a -> api.discordRpc().updateState(discordRpcText), 500);
 
         ChatSend.BUS.register(this, a -> {
             if (a.getMessage().equalsIgnoreCase("/glist")){
@@ -164,16 +169,29 @@ public final class ChatMod implements ModMain, Listener {
                 msg = Text.of(text.getFormattedText()).getFormattedText();
             }
 
-            api.discordRpc().updateState(discordRpcText);
             String message = date1.getFormattedText() + date2.getFormattedText() + date3.getFormattedText() + " " + msg;
             a.setText(Text.of(message));
         }, 1);
 
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
 
+        GameLoop.BUS.register(this, a -> {
+
+            int num = 0;
+            for (int i = 0; i < 37; i++) {
+                ItemStack item = api.minecraft().getPlayer().getInventory().getStackInSlot(i);
+                if (item.isEmpty()) {
+                    num += 1;
+                }
+            }
+            availableSlots = num;
+
+        }, 5);
+
         GuiOverlayRender.BUS.register(this, a -> {
             if (!activeF3 && !hidden) {
                 EntityPlayerSP player = api.minecraft().getPlayer();
+                InventoryPlayer inv = player.getInventory();
 
                 String[] data = player.toString().split(", ");
                 int index1 = data[0].indexOf("'");
@@ -181,7 +199,7 @@ public final class ChatMod implements ModMain, Listener {
                 data[0] = data[0].substring(index1 + 1, index2);
                 NetworkPlayerInfo networkPlayerInfo = api.clientConnection().getPlayerInfo(data[0]);
 
-                api.overlayRenderer().drawRect(1, 12, 240, 74, 0x3B000000);
+                api.overlayRenderer().drawRect(1, 12, 240, 94, 0x3B000000);
                 api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000);
 
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 120 - (api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2), 15.0F, 0x55ffff);
@@ -190,10 +208,11 @@ public final class ChatMod implements ModMain, Listener {
                 api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 3.0F, 15.0F + (10.0F * 3), returnColor(networkPlayerInfo.getResponseTime(), "ping"));
                 api.fontRenderer().drawStringWithShadow(String.format("Еда: %s", player.getFoodStats().getFoodLevel()), 3.0F, 15.0F + (10.0F * 4), returnColor(player.getFoodStats().getFoodLevel(), "food"));
                 api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.getExperienceTotal(), player.getExperienceLevel()), 3.0F, 15.0F + (10.0F * 5), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("%s:", inv.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 6), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Свободных слотов: %s", availableSlots), 3.0F, 15.0F + (10.0F * 7), themeColor);
 
-                InventoryPlayer inv = player.getInventory();
                 ItemStack[] myArr = {inv.getCurrentItem(), inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0)};
-                int pos = 6;
+                int pos = 8;
                 int indexInArray = 0;
 
                 for (ItemStack item : myArr) {
