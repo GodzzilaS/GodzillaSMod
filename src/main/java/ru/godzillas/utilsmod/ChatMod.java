@@ -9,7 +9,6 @@ import dev.xdark.clientapi.event.chat.ChatReceive;
 import dev.xdark.clientapi.event.chat.ChatSend;
 import dev.xdark.clientapi.event.input.KeyPress;
 import dev.xdark.clientapi.event.lifecycle.GameLoop;
-import dev.xdark.clientapi.event.network.ServerSwitch;
 import dev.xdark.clientapi.event.render.GuiOverlayRender;
 import dev.xdark.clientapi.inventory.InventoryPlayer;
 import dev.xdark.clientapi.item.ItemStack;
@@ -32,8 +31,6 @@ public final class ChatMod implements ModMain, Listener {
 
     @Override
     public void load(ClientApi api) {
-
-        ServerSwitch.BUS.register(this, a -> api.discordRpc().updateState(discordRpcText), 500);
 
         ChatSend.BUS.register(this, a -> {
             if (a.getMessage().equalsIgnoreCase("/glist")){
@@ -176,6 +173,7 @@ public final class ChatMod implements ModMain, Listener {
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
 
         GameLoop.BUS.register(this, a -> {
+            api.discordRpc().updateState(discordRpcText);
 
             int num = 0;
             for (int i = 0; i < 37; i++) {
