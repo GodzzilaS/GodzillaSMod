@@ -25,13 +25,13 @@ public final class ChatMod implements ModMain, Listener {
     private final int themeColor = 0xffffff;
     private boolean activeF3;
     private boolean hidden;
+    private String discordRpcText = "Существует на хоббитоне >:c";
 
     @Override
     public void load(ClientApi api) {
 
         ChatSend.BUS.register(this, a -> {
-
-            if (a.getMessage().equals("/glist")){
+            if (a.getMessage().equalsIgnoreCase("/glist")){
                 Collection<NetworkPlayerInfo> connections = api.clientConnection().getPlayerInfos();
 
                 String membersOnServer = "";
@@ -46,11 +46,11 @@ public final class ChatMod implements ModMain, Listener {
                     sortedMemberOnServer += String.format("%s, ", elem);
                 }
 
-                api.chat().printChatMessage(Text.of(String.format("Игроков на сервере: %s:", connections.size()), TextFormatting.LIGHT_PURPLE));
+                api.chat().printChatMessage(Text.of(String.format("Игроков на сервере: %s:", connections.size()), TextFormatting.GOLD));
                 api.chat().printChatMessage(Text.of(sortedMemberOnServer, TextFormatting.GRAY));
             }
 
-            if (a.getMessage().equals("/ghide")){
+            if (a.getMessage().equalsIgnoreCase("/ghide")){
                 hidden = !hidden;
 
                 String action;
@@ -60,10 +60,25 @@ public final class ChatMod implements ModMain, Listener {
                     action = "открыли";
                 }
 
-                api.chat().printChatMessage(Text.of(String.format("Вы %s HUD", action), TextFormatting.LIGHT_PURPLE));
+                api.chat().printChatMessage(Text.of(String.format("Вы %s HUD", action), TextFormatting.GOLD));
             }
 
-            if (a.getMessage().contains("/ginfo")) {
+            if (a.getMessage().startsWith("/gsetrpc")){
+                String[] data = a.getMessage().split(" ");
+
+                String newRpcText;
+                try {
+                    newRpcText = data[1];
+                } catch(IndexOutOfBoundsException e) {
+                    api.chat().printChatMessage(Text.of("Вы не указали текст."));
+                    return;
+                }
+
+                discordRpcText = newRpcText;
+                api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус.", newRpcText), TextFormatting.GOLD));
+            }
+
+            if (a.getMessage().startsWith("/ginfo")) {
                 String[] data = a.getMessage().split(" ");
 
                 String name;
@@ -148,10 +163,10 @@ public final class ChatMod implements ModMain, Listener {
             } catch (NullPointerException e) {
                 msg = Text.of(text.getFormattedText()).getFormattedText();
             }
-            
+
+            api.discordRpc().updateState(discordRpcText);
             String message = date1.getFormattedText() + date2.getFormattedText() + date3.getFormattedText() + " " + msg;
             a.setText(Text.of(message));
-            api.discordRpc().updateState("Существует на хоббитоне >:c");
         }, 1);
 
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
@@ -177,15 +192,14 @@ public final class ChatMod implements ModMain, Listener {
                 api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.getExperienceTotal(), player.getExperienceLevel()), 3.0F, 15.0F + (10.0F * 5), themeColor);
 
                 InventoryPlayer inv = player.getInventory();
-                ItemStack inTheHand = inv.getCurrentItem();
-                ItemStack[] myArr = {inTheHand, inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0)};
+                ItemStack[] myArr = {inv.getCurrentItem(), inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0)};
                 int pos = 6;
                 int indexInArray = 0;
 
                 for (ItemStack item : myArr) {
                     indexInArray += 1;
                     if (!item.isEmpty()) {
-                        String txt = String.format("%s: %s %s", returnText(indexInArray), item.getDisplayName(), checkForNull(item));
+                        String txt = String.format("%s: %s %s", returnPosition(indexInArray), item.getDisplayName(), returnDurability(item));
                         api.fontRenderer().drawStringWithShadow(txt, 21.0F, 20.0F + (10.0F * (pos)), themeColor);
                         api.renderItem().renderItemAndEffectIntoGUI(item, 3, 15 + (10 * (pos)));
                         pos += 2;
@@ -199,7 +213,7 @@ public final class ChatMod implements ModMain, Listener {
     @Override
     public void unload() { }
 
-    String returnText (int index) {
+    String returnPosition (int index) {
         if (index == 1) {
             return "В руке";
         }
@@ -218,7 +232,7 @@ public final class ChatMod implements ModMain, Listener {
         return "";
     }
 
-    String checkForNull (ItemStack shit) {
+    String returnDurability (ItemStack shit) {
         if (shit.isEmpty() || shit.getMaxDamage() == 0 || shit.getMaxDamage() == shit.getMaxDamage() - shit.getItemDamage()) {
             return "";
         } else {
@@ -238,7 +252,6 @@ public final class ChatMod implements ModMain, Listener {
             if (num < 12) {
                 return 0xfde910;
             }
-            return themeColor;
         } else {
             if (num > 50) {
                 return 0xf80000;
@@ -246,8 +259,8 @@ public final class ChatMod implements ModMain, Listener {
             if (num > 12) {
                 return 0xfde910;
             }
-            return themeColor;
         }
+        return themeColor;
     }
 }
 
