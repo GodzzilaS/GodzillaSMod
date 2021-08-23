@@ -6,8 +6,8 @@ plugins {
 
 version = '1.0'
 archivesBaseName = 'ChatMod'
-group = 'ru.godzillas.chatmod'
-mainClassName = 'ru.godzillas.chatmod.ChatMod'
+group = 'ru.godzillas.utilsmod'
+mainClassName = 'ru.godzillas.utilsmod.ChatMod'
 
 sourceCompatibility = targetCompatibility = 1.8
 
