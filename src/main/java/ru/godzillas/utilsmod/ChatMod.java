@@ -76,6 +76,12 @@ public final class ChatMod implements ModMain, Listener {
                     return;
                 }
 
+                for (int i = 1; i < data.length; i++) {
+                    if (i != 1) {
+                        newRpcText += " " + data[i];
+                    }
+                }
+
                 discordRpcText = newRpcText;
                 api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус.", newRpcText), TextFormatting.GOLD));
             }
