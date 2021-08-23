@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 public final class ChatMod implements ModMain, Listener {
 
-    private final int themeColor = 0xfad201;
+    private final int themeColor = 0xffffff;
     private boolean activeF3;
     private boolean hidden;
 
@@ -166,28 +166,38 @@ public final class ChatMod implements ModMain, Listener {
                 data[0] = data[0].substring(index1 + 1, index2);
                 NetworkPlayerInfo networkPlayerInfo = api.clientConnection().getPlayerInfo(data[0]);
 
-                api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 2.0F, 15.0F, themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("Ник: %s", data[0]), 2.0F, 15.0F + (10.0F * 1), themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("Координаты: %s %s %s", data[2], data[3], data[4].replace("]", "")), 2.0F, 15.0F + (10.0F * 2), themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 2.0F, 15.0F + (10.0F * 3), themeColor);
+                api.overlayRenderer().drawRect(1, 12, 240, 74, 0x3B000000);
+                api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000);
+
+                api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 120 - (api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2), 15.0F, 0x55ffff);
+                api.fontRenderer().drawStringWithShadow(String.format("Ник: %s", networkPlayerInfo.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 1), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Координаты: %s %s %s", data[2], data[3], data[4].replace("]", "")), 3.0F, 15.0F + (10.0F * 2), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 3.0F, 15.0F + (10.0F * 3), returnColor(networkPlayerInfo.getResponseTime(), "ping"));
+                api.fontRenderer().drawStringWithShadow(String.format("Еда: %s", player.getFoodStats().getFoodLevel()), 3.0F, 15.0F + (10.0F * 4), returnColor(player.getFoodStats().getFoodLevel(), "food"));
+                api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.getExperienceTotal(), player.getExperienceLevel()), 3.0F, 15.0F + (10.0F * 5), themeColor);
 
                 InventoryPlayer inv = player.getInventory();
                 ItemStack inTheHand = inv.getCurrentItem();
                 ItemStack[] myArr = {inTheHand, inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0)};
-                int pos = 3;
+                int pos = 6;
                 int indexInArray = 0;
 
                 for (ItemStack item : myArr) {
                     indexInArray += 1;
                     if (!item.isEmpty()) {
                         String txt = String.format("%s: %s %s", returnText(indexInArray), item.getDisplayName(), checkForNull(item));
-                        api.fontRenderer().drawStringWithShadow(txt, 20.0F, 19.0F + (10.0F * (pos += 1)), themeColor);
-                        api.renderItem().renderItemIntoGUI(item, 2, 5 + (10 * (pos += 1)));
+                        api.fontRenderer().drawStringWithShadow(txt, 21.0F, 20.0F + (10.0F * (pos)), themeColor);
+                        api.renderItem().renderItemAndEffectIntoGUI(item, 3, 15 + (10 * (pos)));
+                        pos += 2;
+                        //api.overlayRenderer().displayItemActivation(item);
                     }
                 }
             }
         }, 1);
     }
+
+    @Override
+    public void unload() { }
 
     String returnText (int index) {
         if (index == 1) {
@@ -220,8 +230,24 @@ public final class ChatMod implements ModMain, Listener {
         }
     }
 
-    @Override
-    public void unload() {
+    int returnColor (Integer num, String param) {
+        if (param.equals("food")) {
+            if (num < 6) {
+                return 0xf80000;
+            }
+            if (num < 12) {
+                return 0xfde910;
+            }
+            return themeColor;
+        } else {
+            if (num > 50) {
+                return 0xf80000;
+            }
+            if (num > 12) {
+                return 0xfde910;
+            }
+            return themeColor;
+        }
     }
 }
 
