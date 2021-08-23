@@ -8,7 +8,9 @@ import dev.xdark.clientapi.event.Listener;
 import dev.xdark.clientapi.event.chat.ChatReceive;
 import dev.xdark.clientapi.event.chat.ChatSend;
 import dev.xdark.clientapi.event.input.KeyPress;
+import dev.xdark.clientapi.event.input.MousePress;
 import dev.xdark.clientapi.event.lifecycle.GameLoop;
+import dev.xdark.clientapi.event.network.ServerConnect;
 import dev.xdark.clientapi.event.render.GuiOverlayRender;
 import dev.xdark.clientapi.inventory.InventoryPlayer;
 import dev.xdark.clientapi.item.ItemStack;
@@ -17,22 +19,38 @@ import dev.xdark.clientapi.text.Text;
 import dev.xdark.clientapi.text.TextFormatting;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class ChatMod implements ModMain, Listener {
 
     private final int themeColor = 0xffffff;
     private int availableSlots = 0;
+    public int onlineSeconds = 0;
+    private float cps = 0;
     private boolean activeF3;
     private boolean hidden;
     private boolean started = true;
     private boolean customDiscordRpcText = false;
+    private boolean clicked = false;
     private String discordRpcText = "Существует на хоббитоне >:c";
+
+    private static ScheduledExecutorService timer = null;
+
 
     @Override
     public void load(ClientApi api) {
+
+        ServerConnect.BUS.register(this, a -> {
+            if (timer != null) {
+                timer = Executors.newSingleThreadScheduledExecutor();
+                timer.scheduleAtFixedRate(() -> onlineSeconds += 1, 0, 1, TimeUnit.SECONDS);
+            }
+        }, 1);
 
         ChatSend.BUS.register(this, a -> {
             if (a.getMessage().equalsIgnoreCase("/glist")){
@@ -51,6 +69,7 @@ public final class ChatMod implements ModMain, Listener {
                     sortedMemberOnServer += String.format("%s, ", elem);
                 }
 
+                sortedMemberOnServer = sortedMemberOnServer.substring(0, sortedMemberOnServer.length() - 1);
                 api.chat().printChatMessage(Text.of(String.format("Игроков на сервере: %s:", connections.size()), TextFormatting.GOLD));
                 api.chat().printChatMessage(Text.of(sortedMemberOnServer, TextFormatting.GRAY));
             }
@@ -182,6 +201,16 @@ public final class ChatMod implements ModMain, Listener {
 
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
 
+        MousePress.BUS.register(this, a -> {
+            if (a.getButton() == 0 && !clicked) {
+                int sec = new Date().getSeconds();
+                cps += 1;
+                clicked = true;
+            } else {
+                clicked = false;
+            }
+        }, 1);
+
         GameLoop.BUS.register(this, a -> {
             if (customDiscordRpcText) {
                 api.discordRpc().updateState(discordRpcText);
@@ -209,20 +238,21 @@ public final class ChatMod implements ModMain, Listener {
                 data[0] = data[0].substring(index1 + 1, index2);
                 NetworkPlayerInfo networkPlayerInfo = api.clientConnection().getPlayerInfo(data[0]);
 
-                api.overlayRenderer().drawRect(1, 12, 240, 94, 0x3B000000);
+                api.overlayRenderer().drawRect(1, 12, 240, 104, 0x3B000000);
                 api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000);
 
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 120 - (api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2), 14, 0x55ffff);
                 api.fontRenderer().drawStringWithShadow(String.format("Ник: %s", networkPlayerInfo.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 1), themeColor);
                 api.fontRenderer().drawStringWithShadow(String.format("Координаты: %s %s %s", data[2], data[3], data[4].replace("]", "")), 3.0F, 15.0F + (10.0F * 2), themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 3.0F, 15.0F + (10.0F * 3), returnColor(networkPlayerInfo.getResponseTime(), "ping"));
-                api.fontRenderer().drawStringWithShadow(String.format("Еда: %s", player.getFoodStats().getFoodLevel()), 3.0F, 15.0F + (10.0F * 4), returnColor(player.getFoodStats().getFoodLevel(), "food"));
-                api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.getExperienceTotal(), player.getExperienceLevel()), 3.0F, 15.0F + (10.0F * 5), themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("%s:", inv.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 6), themeColor);
-                api.fontRenderer().drawStringWithShadow(String.format("Свободных слотов: %s", availableSlots), 3.0F, 15.0F + (10.0F * 7), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("CPS: %s", cps), 3.0F, 15.0F + (10.0F * 3), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 3.0F, 15.0F + (10.0F * 4), returnColor(networkPlayerInfo.getResponseTime()));
+                api.fontRenderer().drawStringWithShadow(String.format("Онлайн: %s", getGreatTimeFromSeconds(onlineSeconds)), 3.0F, 15.0F + (10.0F * 5), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.getExperienceTotal(), player.getExperienceLevel()), 3.0F, 15.0F + (10.0F * 6), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("%s:", inv.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 7), themeColor);
+                api.fontRenderer().drawStringWithShadow(String.format("Свободных слотов: %s", availableSlots), 3.0F, 15.0F + (10.0F * 8), themeColor);
 
                 ItemStack[] myArr = {inv.getCurrentItem(), inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0)};
-                int pos = 8;
+                int pos = 9;
                 int indexInArray = 0;
 
                 for (ItemStack item : myArr) {
@@ -273,21 +303,23 @@ public final class ChatMod implements ModMain, Listener {
         }
     }
 
-    int returnColor (Integer num, String param) {
-        if (param.equals("food")) {
-            if (num < 6) {
-                return 0xf80000;
-            }
-            if (num < 12) {
-                return 0xfde910;
-            }
-        } else {
-            if (num > 50) {
-                return 0xf80000;
-            }
-            if (num > 12) {
-                return 0xfde910;
-            }
+    String getGreatTimeFromSeconds (int seconds) {
+        String timeString;
+        int h, m, s;
+        h = seconds / 3600;
+        m = (seconds % 3600) / 60;
+        s = seconds % 60;
+
+        timeString = String.format("%02d:%02d:%02d", h, m, s);
+        return timeString;
+    }
+
+    int returnColor (Integer num) {
+        if (num > 50) {
+            return 0xf80000;
+        }
+        if (num > 12) {
+            return 0xfde910;
         }
         return themeColor;
     }
