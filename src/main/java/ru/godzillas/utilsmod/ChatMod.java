@@ -28,6 +28,7 @@ public final class ChatMod implements ModMain, Listener {
     private boolean activeF3;
     private boolean hidden;
     private boolean started = true;
+    private boolean customDiscordRpcText = false;
     private String discordRpcText = "Существует на хоббитоне >:c";
 
     @Override
@@ -85,6 +86,7 @@ public final class ChatMod implements ModMain, Listener {
                 }
 
                 discordRpcText = newRpcText;
+                customDiscordRpcText = true;
                 api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус.", newRpcText), TextFormatting.GOLD));
             }
 
@@ -181,7 +183,9 @@ public final class ChatMod implements ModMain, Listener {
         KeyPress.BUS.register(this, a -> { if (a.getKey() == 61) { activeF3 = !activeF3; } }, 1);
 
         GameLoop.BUS.register(this, a -> {
-            api.discordRpc().updateState(discordRpcText);
+            if (customDiscordRpcText) {
+                api.discordRpc().updateState(discordRpcText);
+            }
 
             int num = 0;
             for (int i = 0; i < 37; i++) {

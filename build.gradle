@@ -5,7 +5,7 @@ plugins {
 }
 
 version = '1.0'
-archivesBaseName = 'ChatMod'
+archivesBaseName = 'UtilsMod'
 group = 'ru.godzillas.utilsmod'
 mainClassName = 'ru.godzillas.utilsmod.ChatMod'
 
