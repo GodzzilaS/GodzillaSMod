@@ -1,4 +1,4 @@
-Вспомогательный мод для cristalix MiniGames.
+# Вспомогательный мод для cristalix MiniGames.
 
 Добавляет:
 
@@ -13,3 +13,12 @@
 
 
 Примеры:
+
+![Alt-текст](https://avatars1.githubusercontent.com/u/5384215?v=3&s=460 "HUD")
+
+![Alt-текст](https://i.imgur.com/LDc90E7.png "Время")
+
+![Alt-текст](https://i.imgur.com/G5xhfKc.png "glist")
+
+![Alt-текст](https://i.imgur.com/OXtFyzm.png "gsetrpc")
+![Alt-текст](https://i.imgur.com/XqQAGvr.png "gsetrpc")
