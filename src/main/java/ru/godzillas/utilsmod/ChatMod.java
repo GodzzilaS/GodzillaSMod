@@ -27,6 +27,7 @@ public final class ChatMod implements ModMain, Listener {
     private int availableSlots = 0;
     private boolean activeF3;
     private boolean hidden;
+    private boolean started = true;
     private String discordRpcText = "Существует на хоббитоне >:c";
 
     @Override
@@ -34,6 +35,7 @@ public final class ChatMod implements ModMain, Listener {
 
         ChatSend.BUS.register(this, a -> {
             if (a.getMessage().equalsIgnoreCase("/glist")){
+                started = !started;
                 Collection<NetworkPlayerInfo> connections = api.clientConnection().getPlayerInfos();
 
                 String membersOnServer = "";
@@ -206,7 +208,7 @@ public final class ChatMod implements ModMain, Listener {
                 api.overlayRenderer().drawRect(1, 12, 240, 94, 0x3B000000);
                 api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000);
 
-                api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 120 - (api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2), 15.0F, 0x55ffff);
+                api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", 120 - (api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2), 14, 0x55ffff);
                 api.fontRenderer().drawStringWithShadow(String.format("Ник: %s", networkPlayerInfo.getDisplayName().getFormattedText()), 3.0F, 15.0F + (10.0F * 1), themeColor);
                 api.fontRenderer().drawStringWithShadow(String.format("Координаты: %s %s %s", data[2], data[3], data[4].replace("]", "")), 3.0F, 15.0F + (10.0F * 2), themeColor);
                 api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.getResponseTime()), 3.0F, 15.0F + (10.0F * 3), returnColor(networkPlayerInfo.getResponseTime(), "ping"));
@@ -286,4 +288,3 @@ public final class ChatMod implements ModMain, Listener {
         return themeColor;
     }
 }
-
