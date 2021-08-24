@@ -150,42 +150,11 @@ class ChatMod : ModMain, Listener {
         }, 1)
 
         ChatReceive.BUS.register(this, { a: ChatReceive ->
-            val text = a.text
-
             val date1 = Text.of("[", TextFormatting.DARK_GRAY)
             val date2 = Text.of(SimpleDateFormat("HH:mm:ss").format(Date()), TextFormatting.LIGHT_PURPLE)
-            val date3 = Text.of("]", TextFormatting.DARK_GRAY)
+            val date3 = Text.of("] ", TextFormatting.DARK_GRAY)
 
-            var msg: String
-            var editedText: String? = ""
-            var style: TextFormatting? = null
-            try {
-                for (element in text) {
-                    style = element.style.color
-                }
-
-                val crutch = text.formattedText.split(" ").toTypedArray()
-                val index = listOf(*crutch).indexOf("»")
-                if (style != null && (index != -1 || "[VC]" in crutch || "[PC]" in crutch)) {
-                    var i = 0
-                    for (word in crutch) {
-                        if (i > index) {
-                            editedText += "$style$word "
-                        } else {
-                            editedText += "$word "
-                            i += 1
-                        }
-                    }
-                } else {
-                    editedText = text.formattedText
-                }
-                msg = Text.of(editedText).formattedText
-            } catch (e: NullPointerException) {
-                msg = Text.of(text.formattedText).formattedText
-            }
-
-            val message = date1.formattedText + date2.formattedText + date3.formattedText + " " + msg
-            a.text = Text.of(message)
+            a.text = Text.of("").append(date1).append(date2).append(date3).append(a.text)
         }, 1)
 
         KeyPress.BUS.register(this, { a: KeyPress -> if (a.key == 61) { activeF3 = !activeF3 } }, 1)
