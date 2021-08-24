@@ -13,7 +13,7 @@ group = 'ru.godzillas.utilsmod'
 sourceCompatibility = targetCompatibility = 1.8
 
 bundler.name = "UtilsMod"
-bundler.mainClass = "ru.godzillas.utilsmod.ChatMod"
+bundler.mainClass = "ru.godzillas.utilsmod.UtilsMod"
 bundler.version = "1.1"
 bundler.author = "GodzillaS"
 

@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
 
-class ChatMod : ModMain, Listener {
+class UtilsMod : ModMain, Listener {
 
     private val themeColor = 0xffffff
     private var availableSlots = 0
