@@ -12,13 +12,13 @@ import dev.xdark.clientapi.event.network.ServerConnect
 import dev.xdark.clientapi.event.render.GuiOverlayRender
 import dev.xdark.clientapi.item.ItemStack
 import dev.xdark.clientapi.network.NetworkPlayerInfo
+import dev.xdark.clientapi.text.ClickEvent
+import dev.xdark.clientapi.text.HoverEvent
 import dev.xdark.clientapi.text.Text
 import dev.xdark.clientapi.text.TextFormatting
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 class ChatMod : ModMain, Listener {
 
@@ -27,12 +27,12 @@ class ChatMod : ModMain, Listener {
     private var onlineSeconds = 0
     private var cps = 0f
     private var activeF3 = false
-    private var hidden = false
-    private var started = true
-    private var clicked = false
+    private var hiddenHUD = false
+    private var lmbDown = false
+    private var onServer = false
     private var customDiscordRpcText = false
     private var discordRpcText = "Существует на хоббитоне >:c"
-    private var timer: ScheduledExecutorService? = null
+    private var timer: ScheduledFuture<*>? = null
 
     override fun load(api: ClientApi) {
 
@@ -45,45 +45,40 @@ class ChatMod : ModMain, Listener {
             data[0] = data[0].substring(index1 + 1, index2)
             if (data[0] == "GodzillaS") { customDiscordRpcText = true }
 
-            if (timer == null) {
-                timer = Executors.newSingleThreadScheduledExecutor()
-                timer?.scheduleAtFixedRate({ onlineSeconds += 1 }, 0, 1, TimeUnit.SECONDS)
+            if (timer == null || timer!!.isCancelled) {
+                onServer = true
+                timer = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({ onlineSeconds += 1 }, 0, 1, TimeUnit.SECONDS)
             }
         }, 1)
 
         ChatSend.BUS.register(this, { a: ChatSend ->
 
             if (a.message.equals("/glist", ignoreCase = true)) {
-                started = !started
-                val connections = api.clientConnection().playerInfos
+                val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
 
-                var membersOnServer = ""
-                for (element in connections) {
-                    membersOnServer += String.format("%s, ", element.gameProfile.name)
+                val text: Text = Text.of("")
+                var name: Text
+                for ((i, element) in connections.withIndex()) {
+                    name = Text.of("${element.gameProfile.name}${ if (i+1 < connections.size) ", " else ""}", TextFormatting.GRAY)
+                    text.append(name.setStyle(name.style
+                        .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/msg ${element.gameProfile.name} "))
+                        .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Написать игроку")))
+                    ))
                 }
 
-                val arr = membersOnServer.split(", ").toTypedArray()
-                Arrays.sort(arr)
-                var sortedMemberOnServer = ""
-                for (elem in arr) {
-                    sortedMemberOnServer += String.format("%s, ", elem)
-                }
-
-                sortedMemberOnServer = sortedMemberOnServer.substring(0, sortedMemberOnServer.length - 1)
-                api.chat().printChatMessage(Text.of(String.format("Игроков на сервере: %s:", connections.size), TextFormatting.GOLD))
-                api.chat().printChatMessage(Text.of(sortedMemberOnServer, TextFormatting.GRAY))
+                api.chat().printChatMessage(Text.of("Игроков на сервере: ${connections.size}:\n", TextFormatting.GOLD).append(text))
             }
 
             if (a.message.equals("/ghide", ignoreCase = true)) {
-                hidden = !hidden
+                hiddenHUD = !hiddenHUD
 
-                val action: String = if (hidden) {
+                val action: String = if (hiddenHUD) {
                     "скрыли"
                 } else {
                     "открыли"
                 }
 
-                api.chat().printChatMessage(Text.of(String.format("Вы %s HUD", action), TextFormatting.GOLD))
+                api.chat().printChatMessage(Text.of("Вы $action HUD", action, TextFormatting.GOLD))
             }
 
             if (a.message.startsWith("/gsetrpc")) {
@@ -104,7 +99,7 @@ class ChatMod : ModMain, Listener {
 
                 discordRpcText = newRpcText
                 customDiscordRpcText = true
-                api.chat().printChatMessage(Text.of(String.format("Вы установили '%s', как ваш статус в rpc.", newRpcText), TextFormatting.GOLD))
+                api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
             }
 
             if (a.message.startsWith("/ginfo")) {
@@ -122,29 +117,29 @@ class ChatMod : ModMain, Listener {
                     networkPlayerInfo = api.clientConnection().getPlayerInfo(name)
                     networkPlayerInfo.gameProfile.id
                 } catch (e: NullPointerException) {
-                    api.chat().printChatMessage(Text.of(String.format("Пользователь '%s' не найден", name)))
+                    api.chat().printChatMessage(Text.of("Пользователь '$name' не найден"))
                     return@register
                 }
 
                 val player = api.minecraft().player
-                val creative: String = if (player.isCreative) { "Да" } else { "Нет" }
+                val creative: String = if (player.isCreative) "Да" else "Нет"
 
                 var properties = ""
                 for (elem in networkPlayerInfo.gameProfile.properties.values()) {
-                    properties += String.format("%s: %s\n", elem.name, elem.value)
+                    properties += "${elem.name}: ${elem.value}\n"
                 }
 
-                var info = String.format("Информация об %s:\n", name)
-                info += String.format("Uuid: %s\n", networkPlayerInfo.gameProfile.id)
-                info += String.format("Пинг: %s\n", networkPlayerInfo.responseTime)
-                info += String.format("\n%s", properties)
+                var info = "Информация об $name:\n"
+                info += "Uuid: ${networkPlayerInfo.gameProfile.id}\n"
+                info += "Пинг: ${networkPlayerInfo.responseTime}\n"
+                info += "\n$properties"
                 info += "Информация об вас:\n"
-                info += String.format("Еда: %s\n", player.foodStats.foodLevel)
-                info += String.format("Уровень: %s\n", player.experienceLevel)
-                info += String.format("Опыт: %s\n", player.experienceTotal)
-                info += String.format("В креативе: %s\n", creative)
-                info += String.format("В руке: %s\n", player.inventory.currentItem.displayName)
-                info += String.format("Количество: %s", player.inventory.currentItem.count)
+                info += "Еда: ${player.foodStats.foodLevel}\n"
+                info += "Уровень: ${player.experienceLevel}\n"
+                info += "Опыт: ${player.experienceTotal}\n"
+                info += "В креативе: $creative\n"
+                info += "В руке: ${player.inventory.currentItem.displayName}\n"
+                info += "Количество: ${player.inventory.currentItem.count}"
                 api.chat().printChatMessage(Text.of(info))
             }
         }, 1)
@@ -160,11 +155,11 @@ class ChatMod : ModMain, Listener {
         KeyPress.BUS.register(this, { a: KeyPress -> if (a.key == 61) { activeF3 = !activeF3 } }, 1)
 
         MousePress.BUS.register(this, { a: MousePress ->
-            if (a.button == 0 && !clicked) {
+            if (a.button == 0 && !lmbDown) {
                 cps += 1f
-                clicked = true
+                lmbDown = true
             } else {
-                clicked = false
+                lmbDown = false
             }
         }, 1)
 
@@ -173,18 +168,25 @@ class ChatMod : ModMain, Listener {
                 api.discordRpc().updateState(discordRpcText)
             }
 
-            var num = 0
-            for (i in 0..36) {
-                val item = api.minecraft().player.inventory.getStackInSlot(i)
-                if (item.isEmpty) {
-                    num += 1
+            if (onServer) {
+                try {
+                    var num = 0
+                    for (i in 0..36) {
+                        val item = api.minecraft().player.inventory.getStackInSlot(i)
+                        if (item.isEmpty) {
+                            num += 1
+                        }
+                    }
+                    availableSlots = num
+                } catch (e: NullPointerException) {
+                    onServer = false
+                    timer?.cancel(false)
                 }
             }
-            availableSlots = num
         }, 5)
 
         GuiOverlayRender.BUS.register(this, {
-            if (!activeF3 && !hidden) {
+            if (!activeF3 && !hiddenHUD && onServer) {
                 val player = api.minecraft().player
                 val inv = player.inventory
 
@@ -198,14 +200,14 @@ class ChatMod : ModMain, Listener {
                 api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000)
 
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", (120 - api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2).toFloat(), 14f, 0x55ffff)
-                api.fontRenderer().drawStringWithShadow(String.format("Ник: %s", networkPlayerInfo.displayName.formattedText), 3.0f, 15.0f + 10.0f * 1, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("Координаты: %s %s %s", data[2], data[3], data[4].replace("]", "")), 3.0f, 15.0f + 10.0f * 2, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("CPS: %s", cps), 3.0f, 15.0f + 10.0f * 3, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("Пинг: %s", networkPlayerInfo.responseTime), 3.0f, 15.0f + 10.0f * 4, returnColor(networkPlayerInfo.responseTime))
-                api.fontRenderer().drawStringWithShadow(String.format("Онлайн: %s", getGreatTimeFromSeconds(onlineSeconds)), 3.0f, 15.0f + 10.0f * 5, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("Опыт | Уровень: %s | %s", player.experienceTotal, player.experienceLevel), 3.0f, 15.0f + 10.0f * 6, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("%s:", inv.displayName.formattedText), 3.0f, 15.0f + 10.0f * 7, themeColor)
-                api.fontRenderer().drawStringWithShadow(String.format("Свободных слотов: %s", availableSlots), 3.0f, 15.0f + 10.0f * 8, themeColor)
+                api.fontRenderer().drawStringWithShadow("Ник: ${networkPlayerInfo.displayName.formattedText}", 3.0f, 15.0f + 10.0f * 1, themeColor)
+                api.fontRenderer().drawStringWithShadow("Координаты: ${data[2]} ${data[3]} ${data[4].replace("]", "")}", 3.0f, 15.0f + 10.0f * 2, themeColor)
+                api.fontRenderer().drawStringWithShadow("CPS: $cps", 3.0f, 15.0f + 10.0f * 3, themeColor)
+                api.fontRenderer().drawStringWithShadow("Пинг: ${networkPlayerInfo.responseTime}", 3.0f, 15.0f + 10.0f * 4, returnColor(networkPlayerInfo.responseTime))
+                api.fontRenderer().drawStringWithShadow("Онлайн: ${getGreatTimeFromSeconds(onlineSeconds)}", 3.0f, 15.0f + 10.0f * 5, themeColor)
+                api.fontRenderer().drawStringWithShadow("Опыт | Уровень: ${player.experienceTotal} | ${player.experienceLevel}", 3.0f, 15.0f + 10.0f * 6, themeColor)
+                api.fontRenderer().drawStringWithShadow("${inv.displayName.formattedText}:", 3.0f, 15.0f + 10.0f * 7, themeColor)
+                api.fontRenderer().drawStringWithShadow("Свободных слотов: $availableSlots", 3.0f, 15.0f + 10.0f * 8, themeColor)
 
                 val myArr = arrayOf(inv.currentItem, inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0))
 
@@ -214,7 +216,7 @@ class ChatMod : ModMain, Listener {
                 for (item in myArr) {
                     indexInArray += 1
                     if (!item.isEmpty) {
-                        val txt = String.format("%s: %s %s", returnPosition(indexInArray), item.displayName, returnDurability(item))
+                        val txt = "${returnPosition(indexInArray)}: ${item.displayName} ${returnDurability(item)}"
                         api.fontRenderer().drawStringWithShadow(txt, 21.0f, 20.0f + 10.0f * pos, themeColor)
                         api.renderItem().renderItemAndEffectIntoGUI(item, 3, 15 + 10 * pos)
                         pos += 2
@@ -250,7 +252,7 @@ class ChatMod : ModMain, Listener {
             ""
         } else {
             try {
-                String.format("[%s]", shit.maxDamage - shit.itemDamage)
+                "[${shit.maxDamage - shit.itemDamage}]"
             } catch (e: NullPointerException) {
                 ""
             }
