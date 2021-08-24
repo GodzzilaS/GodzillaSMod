@@ -25,7 +25,8 @@ class ChatMod : ModMain, Listener {
     private val themeColor = 0xffffff
     private var availableSlots = 0
     private var onlineSeconds = 0
-    private var cps = 0f
+    private var cps = 0
+    private var maxCps = 0
     private var activeF3 = false
     private var hiddenHUD = false
     private var lmbDown = false
@@ -33,6 +34,7 @@ class ChatMod : ModMain, Listener {
     private var customDiscordRpcText = false
     private var discordRpcText = "Существует на хоббитоне >:c"
     private var timer: ScheduledFuture<*>? = null
+    private var resetCPS: ScheduledFuture<*>? = null
 
     override fun load(api: ClientApi) {
 
@@ -48,6 +50,7 @@ class ChatMod : ModMain, Listener {
             if (timer == null || timer!!.isCancelled) {
                 onServer = true
                 timer = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({ onlineSeconds += 1 }, 0, 1, TimeUnit.SECONDS)
+                resetCPS = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({ if (cps != 0) { cps = 0 } }, 0, 1, TimeUnit.SECONDS)
             }
         }, 1)
 
@@ -156,8 +159,7 @@ class ChatMod : ModMain, Listener {
 
         MousePress.BUS.register(this, { a: MousePress ->
             if (a.button == 0 && !lmbDown) {
-                cps += 1f
-                lmbDown = true
+                ++cps
             } else {
                 lmbDown = false
             }
@@ -174,7 +176,7 @@ class ChatMod : ModMain, Listener {
                     for (i in 0..36) {
                         val item = api.minecraft().player.inventory.getStackInSlot(i)
                         if (item.isEmpty) {
-                            num += 1
+                            ++num
                         }
                     }
                     availableSlots = num
@@ -182,6 +184,11 @@ class ChatMod : ModMain, Listener {
                     onServer = false
                     timer?.cancel(false)
                 }
+
+                if (cps > maxCps) {
+                    maxCps = cps
+                }
+
             }
         }, 5)
 
@@ -202,7 +209,7 @@ class ChatMod : ModMain, Listener {
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", (120 - api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2).toFloat(), 14f, 0x55ffff)
                 api.fontRenderer().drawStringWithShadow("Ник: ${networkPlayerInfo.displayName.formattedText}", 3.0f, 15.0f + 10.0f * 1, themeColor)
                 api.fontRenderer().drawStringWithShadow("Координаты: ${data[2]} ${data[3]} ${data[4].replace("]", "")}", 3.0f, 15.0f + 10.0f * 2, themeColor)
-                api.fontRenderer().drawStringWithShadow("CPS: $cps", 3.0f, 15.0f + 10.0f * 3, themeColor)
+                api.fontRenderer().drawStringWithShadow("CPS | max: $cps | $maxCps", 3.0f, 15.0f + 10.0f * 3, themeColor)
                 api.fontRenderer().drawStringWithShadow("Пинг: ${networkPlayerInfo.responseTime}", 3.0f, 15.0f + 10.0f * 4, returnColor(networkPlayerInfo.responseTime))
                 api.fontRenderer().drawStringWithShadow("Онлайн: ${getGreatTimeFromSeconds(onlineSeconds)}", 3.0f, 15.0f + 10.0f * 5, themeColor)
                 api.fontRenderer().drawStringWithShadow("Опыт | Уровень: ${player.experienceTotal} | ${player.experienceLevel}", 3.0f, 15.0f + 10.0f * 6, themeColor)
@@ -214,7 +221,7 @@ class ChatMod : ModMain, Listener {
                 var pos = 9
                 var indexInArray = 0
                 for (item in myArr) {
-                    indexInArray += 1
+                    ++indexInArray
                     if (!item.isEmpty) {
                         val txt = "${returnPosition(indexInArray)}: ${item.displayName} ${returnDurability(item)}"
                         api.fontRenderer().drawStringWithShadow(txt, 21.0f, 20.0f + 10.0f * pos, themeColor)
