@@ -160,6 +160,7 @@ class UtilsMod : ModMain, Listener {
         MousePress.BUS.register(this, { a: MousePress ->
             if (a.button == 0 && !lmbDown) {
                 ++cps
+                lmbDown = true
             } else {
                 lmbDown = false
             }
