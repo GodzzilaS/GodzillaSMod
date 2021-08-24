@@ -5,6 +5,7 @@ import dev.xdark.clientapi.entry.ModMain
 import dev.xdark.clientapi.event.Listener
 import dev.xdark.clientapi.event.chat.ChatReceive
 import dev.xdark.clientapi.event.chat.ChatSend
+import dev.xdark.clientapi.event.chat.TabComplete
 import dev.xdark.clientapi.event.input.KeyPress
 import dev.xdark.clientapi.event.input.MousePress
 import dev.xdark.clientapi.event.lifecycle.GameLoop
@@ -27,6 +28,7 @@ class UtilsMod : ModMain, Listener {
     private var onlineSeconds = 0
     private var cps = 0
     private var maxCps = 0
+    private var index = 0
     private var activeF3 = false
     private var hiddenHUD = false
     private var lmbDown = false
@@ -35,6 +37,8 @@ class UtilsMod : ModMain, Listener {
     private var discordRpcText = "Существует на хоббитоне >:c"
     private var timer: ScheduledFuture<*>? = null
     private var resetCPS: ScheduledFuture<*>? = null
+    private var beforeContent = "."
+    private var content = ""
 
     override fun load(api: ClientApi) {
 
@@ -58,16 +62,7 @@ class UtilsMod : ModMain, Listener {
 
             if (a.message.equals("/glist", ignoreCase = true)) {
                 val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
-
-                val text: Text = Text.of("")
-                var name: Text
-                for ((i, element) in connections.withIndex()) {
-                    name = Text.of("${element.gameProfile.name}${ if (i+1 < connections.size) ", " else ""}", TextFormatting.GRAY)
-                    text.append(name.setStyle(name.style
-                        .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/msg ${element.gameProfile.name} "))
-                        .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Написать игроку")))
-                    ))
-                }
+                val (_, text) = returnListOfMembers(connections)
 
                 api.chat().printChatMessage(Text.of("Игроков на сервере: ${connections.size}:\n", TextFormatting.GOLD).append(text))
             }
@@ -156,6 +151,41 @@ class UtilsMod : ModMain, Listener {
         }, 1)
 
         KeyPress.BUS.register(this, { a: KeyPress -> if (a.key == 61) { activeF3 = !activeF3 } }, 1)
+
+        TabComplete.BUS.register(this,  { a: TabComplete ->
+            var btnPressed = false
+            val data = a.input.split(" ").toTypedArray()
+
+            if (data.lastIndex != 0) {
+                if (!data[data.lastIndex].startsWith(beforeContent, ignoreCase = true)) {
+                    content = data[data.lastIndex]
+                    beforeContent = content[0].toString()
+                    index = 0
+                }
+
+                val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
+                val newCollection: MutableList<NetworkPlayerInfo> = arrayListOf()
+
+                for (element in connections) {
+                    if (element.gameProfile.name.startsWith(beforeContent, ignoreCase = true)) {
+                        newCollection.add(element)
+                    } else {
+                        continue
+                    }
+                }
+
+                val (_, text) = returnListOfMembers(newCollection)
+                api.chat().printChatMessage(text)
+
+                for ((i, element) in newCollection.withIndex()) {
+                    if (element.gameProfile.name.startsWith(beforeContent, ignoreCase = true) && !btnPressed && i == index) {
+                        a.setCompletions(newCollection[i].gameProfile.name)
+                        btnPressed = true
+                        index = if (i + 1 == newCollection.size) { 0 } else { i + 1 }
+                    }
+                }
+            }
+        }, 1)
 
         MousePress.BUS.register(this, { a: MousePress ->
             if (a.button == 0 && !lmbDown) {
@@ -265,6 +295,21 @@ class UtilsMod : ModMain, Listener {
                 ""
             }
         }
+    }
+
+    private fun returnListOfMembers(connections: List<NetworkPlayerInfo>): Array<Text> {
+        val text: Text = Text.of("")
+        var name: Text = Text.of("")
+
+        for ((i, element) in connections.withIndex()) {
+            name = Text.of("${element.gameProfile.name}${ if (i + 1 < connections.size) ", " else ""}", TextFormatting.GRAY)
+            text.append(name.setStyle(name.style
+                .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/msg ${element.gameProfile.name} "))
+                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Написать игроку")))
+            ))
+        }
+
+        return arrayOf(name, text)
     }
 
     private fun getGreatTimeFromSeconds(seconds: Int): String {
