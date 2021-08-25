@@ -18,6 +18,7 @@ import dev.xdark.clientapi.text.HoverEvent
 import dev.xdark.clientapi.text.Text
 import dev.xdark.clientapi.text.TextFormatting
 import org.lwjgl.input.Keyboard
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
@@ -45,6 +46,8 @@ class UtilsMod : ModMain, Listener {
 
         ServerConnect.BUS.register(this, {
             val player = api.minecraft().player
+
+            // println(URL("https://google.com").readText())
 
             val data = player.toString().split(", ").toTypedArray()
             val index1 = data[0].indexOf("'")
@@ -77,7 +80,7 @@ class UtilsMod : ModMain, Listener {
                     "открыли"
                 }
 
-                api.chat().printChatMessage(Text.of("Вы $action HUD", action, TextFormatting.GOLD))
+                api.chat().printChatMessage(Text.of("Вы $action HUD", TextFormatting.GOLD))
             }
 
             if (a.message.startsWith("/gsetrpc")) {
