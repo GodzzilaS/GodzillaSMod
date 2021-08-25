@@ -95,9 +95,13 @@ class UtilsMod : ModMain, Listener {
                     }
                 }
 
-                discordRpcText = newRpcText
-                customDiscordRpcText = true
-                api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
+                if (newRpcText.length < 20) {
+                    discordRpcText = newRpcText
+                    customDiscordRpcText = true
+                    api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
+                } else {
+                    api.chat().printChatMessage("Ваше сообщение должно быть меньше 27-ми символов.")
+                }
             }
 
             if (a.message.startsWith("/ginfo")) {
