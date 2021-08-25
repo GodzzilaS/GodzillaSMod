@@ -17,6 +17,7 @@ import dev.xdark.clientapi.text.ClickEvent
 import dev.xdark.clientapi.text.HoverEvent
 import dev.xdark.clientapi.text.Text
 import dev.xdark.clientapi.text.TextFormatting
+import org.lwjgl.input.Keyboard
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
@@ -192,11 +193,11 @@ class UtilsMod : ModMain, Listener {
         }, 1)
 
         MousePress.BUS.register(this, { a: MousePress ->
-            if (a.button == 0 && !lmbDown) {
+            lmbDown = if (a.button == 0 && !lmbDown) {
                 ++cps
-                lmbDown = true
+                true
             } else {
-                lmbDown = false
+                false
             }
         }, 1)
 
@@ -206,6 +207,9 @@ class UtilsMod : ModMain, Listener {
             }
 
             if (onServer) {
+                val btnTabPressed = Keyboard.isKeyDown(Keyboard.KEY_TAB)
+                hiddenHUD = btnTabPressed
+
                 try {
                     var num = 0
                     for (i in 0..36) {
@@ -223,7 +227,6 @@ class UtilsMod : ModMain, Listener {
                 if (cps > maxCps) {
                     maxCps = cps
                 }
-
             }
         }, 5)
 
