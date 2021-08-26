@@ -24,10 +24,10 @@ import java.util.concurrent.*
 
 class UtilsMod : ModMain, Listener {
 
-    private val themeColor = TextFormatting.LIGHT_PURPLE
+    private val themeColor = TextFormatting.LIGHT_PURPLE // Сделать возможность смены цвета
     private var availableSlots = 0
     private var onlineSeconds = 0
-    private var cps = 0
+    private var cps = 0 // Сделать по человечески счётчик кпс, а не просто макс значение
     private var maxCps = 0
     private var index = 0
     private var activeF3 = false
@@ -38,7 +38,7 @@ class UtilsMod : ModMain, Listener {
     private var discordRpcText = "Существует на хоббитоне >:c"
     private var timer: ScheduledFuture<*>? = null
     private var resetCPS: ScheduledFuture<*>? = null
-    private var beforeContent = "."
+    private var beforeContent = "." // Костыльнуть метод TabComplete
     private var content = ""
 
     override fun load(api: ClientApi) {
@@ -98,12 +98,12 @@ class UtilsMod : ModMain, Listener {
                     }
                 }
 
-                if (newRpcText.length < 20) {
+                if (newRpcText.length < 27) {
                     discordRpcText = newRpcText
                     customDiscordRpcText = true
                     api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
                 } else {
-                    api.chat().printChatMessage("Ваше сообщение должно быть меньше 27-ми символов.")
+                    api.chat().printChatMessage(Text.of("Ваше сообщение должно быть меньше 27-ми символов.", TextFormatting.GOLD))
                 }
             }
 
