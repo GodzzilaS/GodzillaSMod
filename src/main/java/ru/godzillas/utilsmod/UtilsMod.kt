@@ -18,14 +18,13 @@ import dev.xdark.clientapi.text.HoverEvent
 import dev.xdark.clientapi.text.Text
 import dev.xdark.clientapi.text.TextFormatting
 import org.lwjgl.input.Keyboard
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
 
 class UtilsMod : ModMain, Listener {
 
-    private val themeColor = 0xffffff
+    private val themeColor = TextFormatting.LIGHT_PURPLE
     private var availableSlots = 0
     private var onlineSeconds = 0
     private var cps = 0
@@ -152,7 +151,7 @@ class UtilsMod : ModMain, Listener {
 
         ChatReceive.BUS.register(this, { a: ChatReceive ->
             val date1 = Text.of("[", TextFormatting.DARK_GRAY)
-            val date2 = Text.of(SimpleDateFormat("HH:mm:ss").format(Date()), TextFormatting.LIGHT_PURPLE)
+            val date2 = Text.of(SimpleDateFormat("HH:mm:ss").format(Date()), themeColor)
             val date3 = Text.of("] ", TextFormatting.DARK_GRAY)
 
             a.text = Text.of("").append(date1).append(date2).append(date3).append(a.text)
@@ -248,14 +247,14 @@ class UtilsMod : ModMain, Listener {
                 api.overlayRenderer().drawRect(1, 12, 240, 24, 0x40000000)
 
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", (120 - api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2).toFloat(), 14f, 0x55ffff)
-                api.fontRenderer().drawStringWithShadow("Ник: ${networkPlayerInfo.displayName.formattedText}", 3.0f, 15.0f + 10.0f * 1, themeColor)
-                api.fontRenderer().drawStringWithShadow("Координаты: ${data[2]} ${data[3]} ${data[4].replace("]", "")}", 3.0f, 15.0f + 10.0f * 2, themeColor)
-                api.fontRenderer().drawStringWithShadow("CPS | max: $cps | $maxCps", 3.0f, 15.0f + 10.0f * 3, themeColor)
+                api.fontRenderer().drawStringWithShadow("Ник: ${networkPlayerInfo.displayName.formattedText}", 3.0f, 15.0f + 10.0f * 1, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("Координаты: ${data[2]} ${data[3]} ${data[4].replace("]", "")}", 3.0f, 15.0f + 10.0f * 2, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("CPS | max: $cps | $maxCps", 3.0f, 15.0f + 10.0f * 3, 0xffffff)
                 api.fontRenderer().drawStringWithShadow("Пинг: ${networkPlayerInfo.responseTime}", 3.0f, 15.0f + 10.0f * 4, returnColor(networkPlayerInfo.responseTime))
-                api.fontRenderer().drawStringWithShadow("Онлайн: ${getGreatTimeFromSeconds(onlineSeconds)}", 3.0f, 15.0f + 10.0f * 5, themeColor)
-                api.fontRenderer().drawStringWithShadow("Опыт | Уровень: ${player.experienceTotal} | ${player.experienceLevel}", 3.0f, 15.0f + 10.0f * 6, themeColor)
-                api.fontRenderer().drawStringWithShadow("${inv.displayName.formattedText}:", 3.0f, 15.0f + 10.0f * 7, themeColor)
-                api.fontRenderer().drawStringWithShadow("Свободных слотов: $availableSlots", 3.0f, 15.0f + 10.0f * 8, themeColor)
+                api.fontRenderer().drawStringWithShadow("Онлайн: ${getGreatTimeFromSeconds(onlineSeconds)}", 3.0f, 15.0f + 10.0f * 5, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("Опыт | Уровень: ${player.experienceTotal} | ${player.experienceLevel}", 3.0f, 15.0f + 10.0f * 6, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("${inv.displayName.formattedText}:", 3.0f, 15.0f + 10.0f * 7, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("Свободных слотов: $availableSlots", 3.0f, 15.0f + 10.0f * 8, 0xffffff)
 
                 val myArr = arrayOf(inv.currentItem, inv.armorItemInSlot(3), inv.armorItemInSlot(2), inv.armorItemInSlot(1), inv.armorItemInSlot(0))
 
@@ -265,7 +264,7 @@ class UtilsMod : ModMain, Listener {
                     ++indexInArray
                     if (!item.isEmpty) {
                         val txt = "${returnPosition(indexInArray)}: ${item.displayName} ${returnDurability(item)}"
-                        api.fontRenderer().drawStringWithShadow(txt, 21.0f, 20.0f + 10.0f * pos, themeColor)
+                        api.fontRenderer().drawStringWithShadow(txt, 21.0f, 20.0f + 10.0f * pos, 0xffffff)
                         api.renderItem().renderItemAndEffectIntoGUI(item, 3, 15 + 10 * pos)
                         pos += 2
                         //api.overlayRenderer().displayItemActivation(item);
@@ -337,6 +336,6 @@ class UtilsMod : ModMain, Listener {
         }
         return if (num > 12) {
             0xfde910
-        } else themeColor
+        } else 0xffffff
     }
 }
