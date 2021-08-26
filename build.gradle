@@ -6,7 +6,7 @@ plugins {
 apply plugin: 'kotlin'
 apply plugin: 'dev.implario.bundler'
 
-version = '1.2'
+version = '1.3'
 archivesBaseName = 'UtilsMod'
 group = 'ru.godzillas.utilsmod'
 
@@ -14,7 +14,7 @@ sourceCompatibility = targetCompatibility = 1.8
 
 bundler.name = "UtilsMod"
 bundler.mainClass = "ru.godzillas.utilsmod.UtilsMod"
-bundler.version = "1.2"
+bundler.version = "1.3"
 bundler.author = "GodzillaS"
 
 repositories {
