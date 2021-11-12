@@ -12,10 +12,26 @@ group = 'ru.godzillas.utilsmod'
 
 sourceCompatibility = targetCompatibility = 1.8
 
-bundler.name = "UtilsMod"
-bundler.mainClass = "ru.godzillas.utilsmod.UtilsMod"
-bundler.version = "1.3"
-bundler.author = "GodzillaS"
+
+bundler {
+    name = "UtilsMod"
+    mainClass = "ru.godzillas.utilsmod.UtilsMod"
+    version = "1.3"
+    author = "GodzillaS"
+    clientMod true
+}
+
+if (bundler.clientMod) {
+    task bundleInDir(type: Copy) {
+        group 'build'
+        dependsOn build
+        from jar.archiveFile.get().asFile.path.replace('-raw', '-bundle')
+        def dataDir = System.getProperty("user.home")
+        def modsDir = file "$dataDir/.cristalix/updates/Minigames/mods"
+        modsDir.mkdirs()
+        into modsDir
+    }
+}
 
 repositories {
     mavenLocal()
@@ -28,7 +44,7 @@ repositories {
 dependencies {
     compileOnly 'ru.cristalix:client-api:latest-SNAPSHOT'
 
-    compileOnly 'dev.xdark:clientapi:live-SNAPSHOT'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.5.31'
 }
 
 jar.from configurations.runtimeClasspath.collect(project.&zipTree)

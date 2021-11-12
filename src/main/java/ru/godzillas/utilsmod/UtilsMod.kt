@@ -1,5 +1,6 @@
 package ru.godzillas.utilsmod
 
+import com.google.gson.Gson
 import dev.xdark.clientapi.ClientApi
 import dev.xdark.clientapi.entry.ModMain
 import dev.xdark.clientapi.event.Listener
@@ -32,6 +33,7 @@ class UtilsMod : ModMain, Listener {
     private var index = 0
     private var activeF3 = false
     private var hiddenHUD = false
+    private var hiddenHUDTab = false
     private var lmbDown = false
     private var onServer = false
     private var customDiscordRpcText = false
@@ -73,11 +75,7 @@ class UtilsMod : ModMain, Listener {
             if (a.message.equals("/ghide", ignoreCase = true)) {
                 hiddenHUD = !hiddenHUD
 
-                val action: String = if (hiddenHUD) {
-                    "скрыли"
-                } else {
-                    "открыли"
-                }
+                val action: String = if (hiddenHUD) { "скрыли" } else { "открыли" }
 
                 api.chat().printChatMessage(Text.of("Вы $action HUD", TextFormatting.GOLD))
             }
@@ -157,42 +155,52 @@ class UtilsMod : ModMain, Listener {
             a.text = Text.of("").append(date1).append(date2).append(date3).append(a.text)
         }, 1)
 
-        KeyPress.BUS.register(this, { a: KeyPress -> if (a.key == 61) { activeF3 = !activeF3 } }, 1)
-
-        TabComplete.BUS.register(this,  { a: TabComplete ->
-            var btnPressed = false
-            val data = a.input.split(" ").toTypedArray()
-
-            if (data.lastIndex != 0) {
-                if (!data[data.lastIndex].startsWith(beforeContent, ignoreCase = true)) {
-                    content = data[data.lastIndex]
-                    beforeContent = content[0].toString()
-                    index = 0
-                }
-
-                val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
-                val newCollection: MutableList<NetworkPlayerInfo> = arrayListOf()
-
-                for (element in connections) {
-                    if (element.gameProfile.name.startsWith(beforeContent, ignoreCase = true)) {
-                        newCollection.add(element)
-                    } else {
-                        continue
-                    }
-                }
-
-                val (_, text) = returnListOfMembers(newCollection)
-                api.chat().printChatMessage(text)
-
-                for ((i, element) in newCollection.withIndex()) {
-                    if (element.gameProfile.name.startsWith(beforeContent, ignoreCase = true) && !btnPressed && i == index) {
-                        a.setCompletions(newCollection[i].gameProfile.name)
-                        btnPressed = true
-                        index = if (i + 1 == newCollection.size) { 0 } else { i + 1 }
-                    }
-                }
+        KeyPress.BUS.register(this, { a: KeyPress ->
+            if (a.key == 61) {
+                activeF3 = !activeF3
             }
         }, 1)
+
+//        TabComplete.BUS.register(this,  { a: TabComplete ->
+//            var btnPressed = false
+//            val data = a.input.split(" ").toTypedArray()
+//
+//            if (data.lastIndex != 0 && data[data.lastIndex] != "" && data[data.lastIndex] != " ") {
+//                if (!data[data.lastIndex].startsWith(beforeContent, ignoreCase = true)) {
+//                    content = data[data.lastIndex]
+//                    beforeContent = content[0].toString()
+//                    index = 0
+//                }
+//
+//                val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
+//                val newCollection: MutableList<NetworkPlayerInfo> = arrayListOf()
+//
+//                for (element in connections) {
+//                    if (element.gameProfile.name.startsWith(content, ignoreCase = true)) {
+//                        newCollection.add(element)
+//                    } else {
+//                        continue
+//                    }
+//                }
+//
+//                val (_, text) = returnListOfMembers(newCollection)
+//                if (newCollection.size > 0) {
+//                    api.chat().printChatMessage(text)
+//                }
+//
+//                for ((i, element) in newCollection.withIndex()) {
+//                    if (element.gameProfile.name.startsWith(content, ignoreCase = true) && !btnPressed && i == index) {
+//                        a.setCompletions(newCollection[index].gameProfile.name)
+//                        btnPressed = true
+//                        index = if (i + 1 >= newCollection.size) {
+//                            0
+//                        } else {
+//                            i + 1
+//                        }
+//                    }
+//                }
+//            }
+//        }, 1)
 
         MousePress.BUS.register(this, { a: MousePress ->
             lmbDown = if (a.button == 0 && !lmbDown) {
@@ -210,7 +218,7 @@ class UtilsMod : ModMain, Listener {
 
             if (onServer) {
                 val btnTabPressed = Keyboard.isKeyDown(Keyboard.KEY_TAB)
-                hiddenHUD = btnTabPressed
+                hiddenHUDTab = btnTabPressed
 
                 try {
                     var num = 0
@@ -233,7 +241,8 @@ class UtilsMod : ModMain, Listener {
         }, 5)
 
         GuiOverlayRender.BUS.register(this, {
-            if (!activeF3 && !hiddenHUD && onServer) {
+            if (!activeF3 && !hiddenHUD && onServer && !hiddenHUDTab) {
+
                 val player = api.minecraft().player
                 val inv = player.inventory
 
@@ -248,7 +257,7 @@ class UtilsMod : ModMain, Listener {
 
                 api.fontRenderer().drawStringWithShadow("UtilsMod by GodzillaS", (120 - api.fontRenderer().getStringWidth("UtilsMod by GodzillaS") / 2).toFloat(), 14f, 0x55ffff)
                 api.fontRenderer().drawStringWithShadow("Ник: ${networkPlayerInfo.displayName.formattedText}", 3.0f, 15.0f + 10.0f * 1, 0xffffff)
-                api.fontRenderer().drawStringWithShadow("Координаты: ${data[2]} ${data[3]} ${data[4].replace("]", "")}", 3.0f, 15.0f + 10.0f * 2, 0xffffff)
+                api.fontRenderer().drawStringWithShadow("Координаты: x: ${data[2].replace("x=", "").toDouble().toInt()} y: ${data[3].replace("y=", "").toDouble().toInt()} z: ${data[4].replace("z=", "").replace("]", "").toDouble().toInt()}", 3.0f, 15.0f + 10.0f * 2, 0xffffff)
                 api.fontRenderer().drawStringWithShadow("CPS | max: $cps | $maxCps", 3.0f, 15.0f + 10.0f * 3, 0xffffff)
                 api.fontRenderer().drawStringWithShadow("Пинг: ${networkPlayerInfo.responseTime}", 3.0f, 15.0f + 10.0f * 4, returnColor(networkPlayerInfo.responseTime))
                 api.fontRenderer().drawStringWithShadow("Онлайн: ${getGreatTimeFromSeconds(onlineSeconds)}", 3.0f, 15.0f + 10.0f * 5, 0xffffff)
