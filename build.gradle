@@ -12,7 +12,6 @@ group = 'ru.godzillas.utilsmod'
 
 sourceCompatibility = targetCompatibility = 1.8
 
-
 bundler {
     name = "UtilsMod"
     mainClass = "ru.godzillas.utilsmod.UtilsMod"
@@ -36,7 +35,11 @@ if (bundler.clientMod) {
 repositories {
     mavenLocal()
     maven {
-        url 'https://repo.implario.dev/public'
+        url = uri("https://repo.c7x.ru/repository/maven-public/")
+        credentials {
+            username = System.getenv("CRI_REPO_LOGIN") as String
+            password = System.getenv("CRI_REPO_PASSWORD") as String
+        }
     }
     mavenCentral()
 }
