@@ -2,28 +2,23 @@
 
 Добавляет:
 
-- HUD в левом верхнем углу, в котором отображается полезная информация об игроке.
+- Время в чате.
 
-- Возможность переключаться клавишей Tab по никам, после введения какого-либо текста.
-
-- В чат добавляется время.
 
 - Команды:
-    - /ghide - Скрыть HUD.
+    - /gtime - Скрыть время.
     - /glist - Вывести список людей на сервере.
     - /gsetrpc [param] - Поставить [param] в качестве статуса в discord RPC.
 
 
 Примеры:
 
-![Alt-текст](https://i.imgur.com/Ztvt6R3.png "HUD")
+![Alt-текст](https://i.imgur.com/zWOwKMp.png "Время")
 
-![Alt-текст](https://i.imgur.com/LDc90E7.png "Время")
+![Alt-текст](https://i.imgur.com/a74lusW.png "glist")
 
-![Alt-текст](https://i.imgur.com/G5xhfKc.png "glist")
-
-![Alt-текст](https://i.imgur.com/OXtFyzm.png "gsetrpc")
-![Alt-текст](https://i.imgur.com/XqQAGvr.png "gsetrpc")
+![Alt-текст](https://i.imgur.com/i8fNzMe.png "gsetrpc")
+![Alt-текст](https://i.imgur.com/9q2Lp4q.png "gsetrpc")
 
 
-Сервер поддержки: https://discord.gg/E6bmrDG5sr
+В случае возникновения любых вопросов/предложений - Godzzila#9999

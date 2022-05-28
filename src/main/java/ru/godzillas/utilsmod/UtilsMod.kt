@@ -5,49 +5,39 @@ import dev.xdark.clientapi.entry.ModMain
 import dev.xdark.clientapi.event.Listener
 import dev.xdark.clientapi.event.chat.ChatReceive
 import dev.xdark.clientapi.event.chat.ChatSend
+import dev.xdark.clientapi.event.lifecycle.GameLoop
 import dev.xdark.clientapi.event.network.ServerConnect
-import dev.xdark.clientapi.network.NetworkPlayerInfo
-import dev.xdark.clientapi.text.ClickEvent
-import dev.xdark.clientapi.text.HoverEvent
-import dev.xdark.clientapi.text.Text
-import dev.xdark.clientapi.text.TextFormatting
+import dev.xdark.clientapi.text.*
+import ru.godzillas.utilsmod.utils.PlayerUtils
 import java.text.SimpleDateFormat
 import java.util.*
 
 class UtilsMod : ModMain, Listener {
 
-    private val themeColor = TextFormatting.LIGHT_PURPLE // Сделать возможность смены цвета
-    private var customDiscordRpcText = false
-    private var discordRpcText = "ЫаЫаЫаЫаЫ"
-    private var timeInChat = true
+    private var enabledRpc = false
+    private var enabledTimeInChat = true
+    private var rpcText = "ЫаЫаЫаЫаЫ"
+    private var clientNick = ""
+    private val staffGroupsWithoutPermission = listOf("PLAYER", "YOUTUBE", "BUILDER", "SR_BUILDER", "TESTER", "DEVELOPER")
 
     override fun load(api: ClientApi) {
 
         ServerConnect.BUS.register(this, {
-            val player = api.minecraft().player
-
-            val data = player.toString().split(", ").toTypedArray()
-            val index1 = data[0].indexOf("'")
-            val index2 = data[0].lastIndexOf("'")
-            data[0] = data[0].substring(index1 + 1, index2)
-            if (data[0] == "GodzillaS") { customDiscordRpcText = true }
-
+            if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
+            if (clientNick == "GodzillaS") { enabledRpc = true }
         }, 1)
 
         ChatSend.BUS.register(this, { a: ChatSend ->
-
+            if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
             if (a.message.equals("/glist", ignoreCase = true)) {
                 val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
-                val (_, text) = returnListOfMembers(connections)
-
+                val (_, text) = PlayerUtils.getListOfUsers(connections)
                 api.chat().printChatMessage(Text.of("Игроков на сервере: ${connections.size}:\n", TextFormatting.GOLD).append(text))
             }
 
             if (a.message.equals("/gtime", ignoreCase = true)) {
-                timeInChat = !timeInChat
-
-                val action: String = if (timeInChat) { "открыли" } else { "скрыли" }
-
+                enabledTimeInChat = !enabledTimeInChat
+                val action: String = if (enabledTimeInChat) { "показываете" } else { "скрываете" }
                 api.chat().printChatMessage(Text.of("Вы $action время в чате.", TextFormatting.GOLD))
             }
 
@@ -67,9 +57,9 @@ class UtilsMod : ModMain, Listener {
                     }
                 }
 
-                if (newRpcText.length < 27) {
-                    discordRpcText = newRpcText
-                    customDiscordRpcText = true
+                if (newRpcText.length <= 27) {
+                    rpcText = newRpcText
+                    enabledRpc = true
                     api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
                 } else {
                     api.chat().printChatMessage(Text.of("Ваше сообщение должно быть меньше 27-ми символов.", TextFormatting.GOLD))
@@ -78,29 +68,48 @@ class UtilsMod : ModMain, Listener {
         }, 1)
 
         ChatReceive.BUS.register(this, { a: ChatReceive ->
-            if (timeInChat) {
-                val date1 = Text.of("[", TextFormatting.DARK_GRAY)
-                val date2 = Text.of(SimpleDateFormat("HH:mm:ss").format(Date()), themeColor)
-                val date3 = Text.of("] ", TextFormatting.DARK_GRAY)
-                a.text = Text.of("").append(date1).append(date2).append(date3).append(a.text)
+            if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
+            val senderData = PlayerUtils.getUserUuidAndName(a.text.formattedText, api)
+
+            if (senderData.isNotEmpty()) {
+                val senderNick = senderData[1].toString()
+                val client = api.clientConnection().getPlayerInfo(clientNick)
+                val sender = api.clientConnection().getPlayerInfo(senderNick)
+                val clientStaffGroup = PlayerUtils.getUserStaffGroup(client)
+                val senderStaffGroup = PlayerUtils.getUserStaffGroup(sender)
+
+
+                if (!staffGroupsWithoutPermission.contains(clientStaffGroup) && staffGroupsWithoutPermission.contains(senderStaffGroup)) {
+                    val newText = Text.of("")
+                    for (str in a.text.parts) {
+                        if (str.unformattedText.contains(senderNick)) {
+                            str.style = str.style
+                                .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
+                                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
+                        }
+                        newText.append(str)
+                    }
+                    a.text = newText
+                }
+            }
+
+            if (enabledTimeInChat) {
+                val date = Text.of("§8[§d" + SimpleDateFormat("HH:mm:ss").format(Date()) + "§8]§r ")
+                a.text = Text.of("").append(date).append(a.text)
+            }
+        }, 2)
+
+        GameLoop.BUS.register(this, {
+            if (enabledRpc) {
+                api.discordRpc().updateState(rpcText)
             }
         }, 1)
     }
 
-    override fun unload() {}
-
-    private fun returnListOfMembers(connections: List<NetworkPlayerInfo>): Array<Text> {
-        val text: Text = Text.of("")
-        var name: Text = Text.of("")
-
-        for ((i, element) in connections.withIndex()) {
-            name = Text.of("${element.gameProfile.name}${ if (i + 1 < connections.size) ", " else ""}", TextFormatting.GRAY)
-            text.append(name.setStyle(name.style
-                .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/msg ${element.gameProfile.name} "))
-                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Написать игроку")))
-            ))
-        }
-
-        return arrayOf(name, text)
+    override fun unload() {
+        ServerConnect.BUS.unregisterAll(this)
+        ChatSend.BUS.unregisterAll(this)
+        ChatReceive.BUS.unregisterAll(this)
+        GameLoop.BUS.unregisterAll(this)
     }
 }
