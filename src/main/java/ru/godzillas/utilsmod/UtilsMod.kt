@@ -73,23 +73,24 @@ class UtilsMod : ModMain, Listener {
 
             if (senderData.isNotEmpty()) {
                 val senderNick = senderData[1].toString()
-                val client = api.clientConnection().getPlayerInfo(clientNick)
-                val sender = api.clientConnection().getPlayerInfo(senderNick)
-                val clientStaffGroup = PlayerUtils.getUserStaffGroup(client)
-                val senderStaffGroup = PlayerUtils.getUserStaffGroup(sender)
+                if (senderNick != clientNick) {
+                    val client = api.clientConnection().getPlayerInfo(clientNick)
+                    val sender = api.clientConnection().getPlayerInfo(senderNick)
+                    val clientStaffGroup = PlayerUtils.getUserStaffGroup(client)
+                    val senderStaffGroup = PlayerUtils.getUserStaffGroup(sender)
 
-
-                if (!staffGroupsWithoutPermission.contains(clientStaffGroup) && staffGroupsWithoutPermission.contains(senderStaffGroup)) {
-                    val newText = Text.of("")
-                    for (str in a.text.parts) {
-                        if (str.unformattedText.contains(senderNick)) {
-                            str.style = str.style
-                                .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
-                                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
+                    if (!staffGroupsWithoutPermission.contains(clientStaffGroup) && staffGroupsWithoutPermission.contains(senderStaffGroup)) {
+                        val newText = Text.of("")
+                        for (str in a.text.parts) {
+                            if (str.unformattedText.contains(senderNick)) {
+                                str.style = str.style
+                                    .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
+                                    .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
+                            }
+                            newText.append(str)
                         }
-                        newText.append(str)
+                        a.text = newText
                     }
-                    a.text = newText
                 }
             }
 
