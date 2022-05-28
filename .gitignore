@@ -1,7 +1,4 @@
 # Project exclude paths
 .idea
 .gradle/
-build/classes
-build/kotlin
-build/tmp
-mod.properties
+build
