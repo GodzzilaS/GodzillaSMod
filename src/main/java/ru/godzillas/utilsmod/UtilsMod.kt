@@ -33,6 +33,7 @@ class UtilsMod : ModMain, Listener {
             api.threadManagement().newSingleThreadedExecutor().execute {
                 val user = Database.createUser(api)
                 colorOfTime = user.chat_color
+                Database.loginUser(api)
             }
         }, 1)
 
@@ -41,13 +42,13 @@ class UtilsMod : ModMain, Listener {
             if (a.message.equals("/glist", ignoreCase = true)) {
                 val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
                 val (_, text) = PlayerUtils.getListOfUsers(connections)
-                api.chat().printChatMessage(Text.of("Игроков на сервере: ${connections.size}:\n", TextFormatting.GOLD).append(text))
+                api.chat().printChatMessage(Text.of("§bИгроков на сервере: §c${connections.size}§b:§r\n").append(text))
             }
 
             if (a.message.equals("/gtime", ignoreCase = true)) {
                 enabledTimeInChat = !enabledTimeInChat
                 val action: String = if (enabledTimeInChat) { "показываете" } else { "скрываете" }
-                api.chat().printChatMessage(Text.of("Вы $action время в чате.", TextFormatting.GOLD))
+                api.chat().printChatMessage(Text.of("§bВы §c$action§b время в чате."))
             }
 
             if (a.message.startsWith("/gsetrpc")) {
@@ -56,7 +57,7 @@ class UtilsMod : ModMain, Listener {
                 var newRpcText: String = try {
                     data[1]
                 } catch (e: IndexOutOfBoundsException) {
-                    api.chat().printChatMessage(Text.of("Вы не указали текст."))
+                    api.chat().printChatMessage(Text.of("§bВы не указали §cтекст своего статуса§b."))
                     return@register
                 }
 
@@ -69,9 +70,9 @@ class UtilsMod : ModMain, Listener {
                 if (newRpcText.length <= 27) {
                     rpcText = newRpcText
                     enabledRpc = true
-                    api.chat().printChatMessage(Text.of("Вы установили '$newRpcText', как ваш статус в rpc.", TextFormatting.GOLD))
+                    api.chat().printChatMessage(Text.of("§bВы установили §с'$newRpcText'§b, как ваш статус в rpc."))
                 } else {
-                    api.chat().printChatMessage(Text.of("Ваше сообщение должно быть меньше 27-ми символов.", TextFormatting.GOLD))
+                    api.chat().printChatMessage(Text.of("§bВаше сообщение должно быть §сменьше§b 27-ми символов."))
                 }
             }
 
@@ -79,24 +80,28 @@ class UtilsMod : ModMain, Listener {
                 val data = a.message.split(" ")
 
                 if (data.size != 2) {
-                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                    api.chat().printChatMessage(Text.of("§bИспользование: §с/gtimecolor #hex"))
                     return@register
                 }
                 var hex = data[1].lowercase()
 
                 if (hex.length != 7) {
-                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                    api.chat().printChatMessage(Text.of("§b$clientNick, §с$hex§b не является hex'ом"))
                     return@register
                 }
 
                 val isHex = hex.matches(Regex("#[\\d\\[a-fA-F\\]]{6}"))
                 if (isHex) {
                     hex = hex.replace("#", "")
-                    Database.updateUser(api, hex)
-                    colorOfTime = hex
-                    api.chat().printChatMessage(Text.of("Вы установили ¨$hex#$hex§6 цвет для вашего времени.", TextFormatting.GOLD))
+                    if (colorOfTime != hex) {
+                        Database.updateUser(api, hex)
+                        colorOfTime = hex
+                        api.chat().printChatMessage(Text.of("§bВы установили ¨$hex#$hex§b цвет для вашего времени."))
+                    } else {
+                        api.chat().printChatMessage(Text.of("§bУ вас уже стоит этот hex"))
+                    }
                 } else {
-                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                    api.chat().printChatMessage(Text.of("§b$clientNick, §с$hex§b не является hex'ом"))
                 }
             }
 
@@ -113,7 +118,7 @@ class UtilsMod : ModMain, Listener {
                         if (str.unformattedText.contains(senderNick)) {
                             str.style = str.style
                                 .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
-                                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
+                                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("§bНажмите для выдачи мута")))
                         }
                         newText.append(str)
                     }

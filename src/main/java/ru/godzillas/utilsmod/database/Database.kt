@@ -23,6 +23,12 @@ object Database {
         }
     }
 
+    fun loginUser(api: ClientApi) {
+        updateClientUuid(api)
+        val user: User = Gson().fromJson(URL("$URL_NAME/login\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick").readText(), User::class.java)
+        println("[GodzillaSMod] Successfully send user login to server data: $user")
+    }
+
     fun createUser(api: ClientApi): User {
         updateClientUuid(api)
         val user: User = Gson().fromJson(URL("$URL_NAME/create-user\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick").readText(), User::class.java)
