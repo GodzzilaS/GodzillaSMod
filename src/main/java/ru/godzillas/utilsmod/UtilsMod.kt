@@ -110,9 +110,12 @@ class UtilsMod : ModMain, Listener {
         }, 1)
 
         ChatReceive.BUS.register(this, { a: ChatReceive ->
+            println(a.text)
+
             val senderData = PlayerUtils.getUserUuidAndName(a.text.formattedText, api)
 
-            if (senderData.isNotEmpty()) {
+            // Нагло стрингой вставлена строка, потому что я не заню, как вызвать этот компонент... Надо будет фиксануть!
+            if (senderData.isNotEmpty() && !a.text.toString().startsWith("TranslatableComponent{key='chat.type.advancement.task', args=[TextComponent{text='")) {
                 val senderNick = senderData[1].toString()
                 if (senderNick != clientNick) {
                     val newText = Text.of("")
