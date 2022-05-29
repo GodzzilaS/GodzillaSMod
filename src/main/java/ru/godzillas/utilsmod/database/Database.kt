@@ -49,8 +49,8 @@ object Database {
                 "\$uuid=$clientUuid" +
                 "\$name=$clientNick" +
                 "\$chat_color=$chatColor" +
-                "\$rpcText=$rpcText" +
-                "\$enabledRpc=$enabledRpc").readText(), User::class.java)
+                "\$text_rpc=$rpcText" +
+                "\$enabled_rpc=$enabledRpc").readText(), User::class.java)
         println("[GodzillaSMod] Successfully update user data: $user")
         return user
     }
