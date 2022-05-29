@@ -33,6 +33,8 @@ class UtilsMod : ModMain, Listener {
             api.threadManagement().newSingleThreadedExecutor().execute {
                 val user = Database.createUser(api)
                 colorOfTime = user.chat_color
+                enabledRpc = user.enabled_rpc
+                rpcText = user.text_rpc
                 Database.loginUser(api)
             }
         }, 1)
@@ -71,6 +73,7 @@ class UtilsMod : ModMain, Listener {
                     rpcText = newRpcText
                     enabledRpc = true
                     api.chat().printChatMessage(Text.of("§bВы установили §с'$newRpcText'§b, как ваш статус в rpc."))
+                    Database.updateUser(api, colorOfTime, rpcText, enabledRpc)
                 } else {
                     api.chat().printChatMessage(Text.of("§bВаше сообщение должно быть §cменьше§b 27-ми символов."))
                 }
@@ -94,9 +97,9 @@ class UtilsMod : ModMain, Listener {
                 if (isHex) {
                     hex = hex.replace("#", "")
                     if (colorOfTime != hex) {
-                        Database.updateUser(api, hex)
                         colorOfTime = hex
                         api.chat().printChatMessage(Text.of("§bВы установили ¨$hex#$hex§b цвет для вашего времени."))
+                        Database.updateUser(api, colorOfTime, rpcText, enabledRpc)
                     } else {
                         api.chat().printChatMessage(Text.of("§bУ вас уже стоит этот hex"))
                     }

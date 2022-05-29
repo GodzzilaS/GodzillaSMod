@@ -25,27 +25,42 @@ object Database {
 
     fun loginUser(api: ClientApi) {
         updateClientUuid(api)
-        val user: User = Gson().fromJson(URL("$URL_NAME/login\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick").readText(), User::class.java)
+        val user: User = Gson().fromJson(URL("$URL_NAME/login" +
+                "\$token=$TOKEN" +
+                "\$uuid=$clientUuid" +
+                "\$name=$clientNick").readText(), User::class.java)
         println("[GodzillaSMod] Successfully send user login to server data: $user")
     }
 
     fun createUser(api: ClientApi): User {
         updateClientUuid(api)
-        val user: User = Gson().fromJson(URL("$URL_NAME/create-user\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick").readText(), User::class.java)
+        val user: User = Gson().fromJson(URL("$URL_NAME/create-user" +
+                "\$token=$TOKEN" +
+                "\$uuid=$clientUuid" +
+                "\$name=$clientNick").readText(), User::class.java)
         println("[GodzillaSMod] Successfully create and get user data: $user")
         return user
     }
 
-    fun updateUser(api: ClientApi, chatColor: String): User {
+    fun updateUser(api: ClientApi, chatColor: String, rpcText: String, enabledRpc: Boolean): User {
         updateClientUuid(api)
-        val user: User = Gson().fromJson(URL("$URL_NAME/update-user\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick\$chat_color=$chatColor").readText(), User::class.java)
+        val user: User = Gson().fromJson(URL("$URL_NAME/update-user" +
+                "\$token=$TOKEN" +
+                "\$uuid=$clientUuid" +
+                "\$name=$clientNick" +
+                "\$chat_color=$chatColor" +
+                "\$rpcText=$rpcText" +
+                "\$enabledRpc=$enabledRpc").readText(), User::class.java)
         println("[GodzillaSMod] Successfully update user data: $user")
         return user
     }
 
     fun getUser(api: ClientApi): User {
         updateClientUuid(api)
-        val user: User = Gson().fromJson(URL("$URL_NAME/get-user\$token=$TOKEN\$uuid=$clientUuid\$name=$clientNick").readText(), User::class.java)
+        val user: User = Gson().fromJson(URL("$URL_NAME/get-user" +
+                "\$token=$TOKEN" +
+                "\$uuid=$clientUuid" +
+                "\$name=$clientNick").readText(), User::class.java)
         println("[GodzillaSMod] Successfully get user data: $user")
         return user
     }
