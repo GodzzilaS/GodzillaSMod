@@ -1,12 +1,12 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.30'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.21'
     id 'org.hidetake.ssh' version '2.10.1'
     id 'dev.implario.bundler' version '3.0.2' apply false
 }
 apply plugin: 'kotlin'
 apply plugin: 'dev.implario.bundler'
 
-version = '1.3'
+version = '1.3.1'
 archivesBaseName = 'UtilsMod'
 group = 'ru.godzillas.utilsmod'
 
@@ -15,7 +15,7 @@ sourceCompatibility = targetCompatibility = 1.8
 bundler {
     name = "UtilsMod"
     mainClass = "ru.godzillas.utilsmod.UtilsMod"
-    version = "1.3"
+    version = "1.3.1"
     author = "GodzillaS"
     clientMod true
 }
@@ -47,7 +47,7 @@ repositories {
 dependencies {
     compileOnly 'ru.cristalix:client-api:latest-SNAPSHOT'
 
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.5.31'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.6.21'
 }
 
 jar.from configurations.runtimeClasspath.collect(project.&zipTree)

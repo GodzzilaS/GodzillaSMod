@@ -6,12 +6,12 @@ import dev.xdark.clientapi.text.ClickEvent
 import dev.xdark.clientapi.text.HoverEvent
 import dev.xdark.clientapi.text.Text
 import dev.xdark.clientapi.text.TextFormatting
+import java.util.*
 
 object PlayerUtils {
 
     fun getUserUuidAndName(text: String, api: ClientApi): List<Any> {
         val unformattedText: CharSequence = text
-        println(unformattedText)
         val a1 = unformattedText
             .replace(Regex("§."), "")
             .replace(Regex("¨......"), "")
@@ -54,7 +54,6 @@ object PlayerUtils {
         } catch (ex: IndexOutOfBoundsException) {
             "PLAYER"
         }
-
         return group
     }
 
@@ -67,5 +66,13 @@ object PlayerUtils {
         data[0] = data[0].substring(index1 + 1, index2)
 
         return data[0]
+    }
+
+    fun getClientUuid(api: ClientApi): UUID? {
+        return try {
+            api.minecraft().player.playerInfo.gameProfile.id
+        } catch (ex: Exception) {
+            null
+        }
     }
 }

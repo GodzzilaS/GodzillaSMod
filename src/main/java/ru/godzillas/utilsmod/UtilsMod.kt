@@ -8,27 +8,36 @@ import dev.xdark.clientapi.event.chat.ChatSend
 import dev.xdark.clientapi.event.lifecycle.GameLoop
 import dev.xdark.clientapi.event.network.ServerConnect
 import dev.xdark.clientapi.text.*
+import ru.godzillas.utilsmod.database.Database
 import ru.godzillas.utilsmod.utils.PlayerUtils
 import java.text.SimpleDateFormat
 import java.util.*
+
+internal var clientNick: String = ""
+
 
 class UtilsMod : ModMain, Listener {
 
     private var enabledRpc = false
     private var enabledTimeInChat = true
     private var rpcText = "ЫаЫаЫаЫаЫ"
-    private var clientNick = ""
-    private val staffGroupsWithoutPermission = listOf("PLAYER", "YOUTUBE", "BUILDER", "SR_BUILDER", "TESTER", "DEVELOPER")
+    private var colorOfTime = "FF55FF"
 
     override fun load(api: ClientApi) {
 
         ServerConnect.BUS.register(this, {
             if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
             if (clientNick == "GodzillaS") { enabledRpc = true }
+
+            // Считываю статку, сколько людей зашло с модом, так-же через это работает конфиг со временем в чате
+            api.threadManagement().newSingleThreadedExecutor().execute {
+                val user = Database.createUser(api)
+                colorOfTime = user.chat_color
+            }
         }, 1)
 
         ChatSend.BUS.register(this, { a: ChatSend ->
-            if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
+
             if (a.message.equals("/glist", ignoreCase = true)) {
                 val connections = api.clientConnection().playerInfos.sortedBy { it.gameProfile.name }
                 val (_, text) = PlayerUtils.getListOfUsers(connections)
@@ -65,46 +74,70 @@ class UtilsMod : ModMain, Listener {
                     api.chat().printChatMessage(Text.of("Ваше сообщение должно быть меньше 27-ми символов.", TextFormatting.GOLD))
                 }
             }
+
+            if (a.message.startsWith("/gtimecolor")) {
+                val data = a.message.split(" ")
+
+                if (data.size != 2) {
+                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                    return@register
+                }
+                var hex = data[1].lowercase()
+
+                if (hex.length != 7) {
+                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                    return@register
+                }
+
+                val isHex = hex.matches(Regex("#[\\d\\[a-fA-F\\]]{6}"))
+                if (isHex) {
+                    hex = hex.replace("#", "")
+                    Database.updateUser(api, hex)
+                    colorOfTime = hex
+                    api.chat().printChatMessage(Text.of("Вы установили ¨$hex#$hex§6 цвет для вашего времени.", TextFormatting.GOLD))
+                } else {
+                    api.chat().printChatMessage(Text.of("Использование: /gtimecolor #hex", TextFormatting.GOLD))
+                }
+            }
+
         }, 1)
 
         ChatReceive.BUS.register(this, { a: ChatReceive ->
-            if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
             val senderData = PlayerUtils.getUserUuidAndName(a.text.formattedText, api)
 
             if (senderData.isNotEmpty()) {
                 val senderNick = senderData[1].toString()
                 if (senderNick != clientNick) {
-                    val client = api.clientConnection().getPlayerInfo(clientNick)
-                    val sender = api.clientConnection().getPlayerInfo(senderNick)
-                    val clientStaffGroup = PlayerUtils.getUserStaffGroup(client)
-                    val senderStaffGroup = PlayerUtils.getUserStaffGroup(sender)
-
-                    if (!staffGroupsWithoutPermission.contains(clientStaffGroup) && staffGroupsWithoutPermission.contains(senderStaffGroup)) {
-                        val newText = Text.of("")
-                        for (str in a.text.parts) {
-                            if (str.unformattedText.contains(senderNick)) {
-                                str.style = str.style
-                                    .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
-                                    .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
-                            }
-                            newText.append(str)
+                    val newText = Text.of("")
+                    for (str in a.text.parts) {
+                        if (str.unformattedText.contains(senderNick)) {
+                            str.style = str.style
+                                .setClickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/mute $senderNick "))
+                                .setHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.of("Нажмите для выдачи мута")))
                         }
-                        a.text = newText
+                        newText.append(str)
                     }
+                    a.text = newText
                 }
             }
 
             if (enabledTimeInChat) {
-                val date = Text.of("§8[§d" + SimpleDateFormat("HH:mm:ss").format(Date()) + "§8]§r ")
+                val date = Text.of("§8[¨${colorOfTime.lowercase()}" + SimpleDateFormat("HH:mm:ss").format(Date()) + "§8]§r ")
                 a.text = Text.of("").append(date).append(a.text)
             }
-        }, 2)
+        }, 3)
 
         GameLoop.BUS.register(this, {
+            if (clientNick == "") {
+                try {
+                    clientNick = PlayerUtils.getClientName(api)
+                } catch (_: java.lang.NullPointerException) { }
+            }
+
             if (enabledRpc) {
                 api.discordRpc().updateState(rpcText)
             }
-        }, 1)
+        }, 2)
     }
 
     override fun unload() {
