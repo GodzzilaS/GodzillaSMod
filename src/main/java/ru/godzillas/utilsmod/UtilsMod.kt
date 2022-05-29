@@ -27,7 +27,6 @@ class UtilsMod : ModMain, Listener {
 
         ServerConnect.BUS.register(this, {
             if (clientNick == "") { clientNick = PlayerUtils.getClientName(api) }
-            if (clientNick == "GodzillaS") { enabledRpc = true }
 
             // Считываю статку, сколько людей зашло с модом, так-же через это работает конфиг со временем в чате
             api.threadManagement().newSingleThreadedExecutor().execute {
