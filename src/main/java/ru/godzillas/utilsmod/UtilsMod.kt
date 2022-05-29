@@ -72,7 +72,7 @@ class UtilsMod : ModMain, Listener {
                     enabledRpc = true
                     api.chat().printChatMessage(Text.of("§bВы установили §с'$newRpcText'§b, как ваш статус в rpc."))
                 } else {
-                    api.chat().printChatMessage(Text.of("§bВаше сообщение должно быть §сменьше§b 27-ми символов."))
+                    api.chat().printChatMessage(Text.of("§bВаше сообщение должно быть §cменьше§b 27-ми символов."))
                 }
             }
 
@@ -80,13 +80,13 @@ class UtilsMod : ModMain, Listener {
                 val data = a.message.split(" ")
 
                 if (data.size != 2) {
-                    api.chat().printChatMessage(Text.of("§bИспользование: §с/gtimecolor #hex"))
+                    api.chat().printChatMessage(Text.of("§bИспользование: §c/gtimecolor #hex"))
                     return@register
                 }
                 var hex = data[1].lowercase()
 
                 if (hex.length != 7) {
-                    api.chat().printChatMessage(Text.of("§b$clientNick, §с$hex§b не является hex'ом"))
+                    api.chat().printChatMessage(Text.of("§b$clientNick, §c$hex§b не является hex'ом"))
                     return@register
                 }
 
@@ -101,7 +101,7 @@ class UtilsMod : ModMain, Listener {
                         api.chat().printChatMessage(Text.of("§bУ вас уже стоит этот hex"))
                     }
                 } else {
-                    api.chat().printChatMessage(Text.of("§b$clientNick, §с$hex§b не является hex'ом"))
+                    api.chat().printChatMessage(Text.of("§b$clientNick, §c$hex§b не является hex'ом"))
                 }
             }
 
